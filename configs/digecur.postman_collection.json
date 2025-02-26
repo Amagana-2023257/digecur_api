@@ -1,0 +1,408 @@
+{
+	"info": {
+		"_postman_id": "f0db88d5-d006-4d8c-9e65-1c610de9e847",
+		"name": "digecur Copy",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "37589008"
+	},
+	"item": [
+		{
+			"name": "auth",
+			"item": [
+				{
+					"name": "register",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "username",
+									"value": "test05",
+									"type": "text"
+								},
+								{
+									"key": "email",
+									"value": "test05@gmail.com",
+									"type": "text"
+								},
+								{
+									"key": "bio",
+									"value": "bio test",
+									"type": "text"
+								},
+								{
+									"key": "dateOfBirth",
+									"value": "1990-12-25",
+									"type": "text"
+								},
+								{
+									"key": "profilePicture",
+									"type": "file",
+									"src": "/C:/Users/Informatica/Pictures/images.jpg"
+								},
+								{
+									"key": "password",
+									"value": "Contrasenia1,23",
+									"type": "text"
+								},
+								{
+									"key": "name",
+									"value": "Angel",
+									"type": "text"
+								},
+								{
+									"key": "surname",
+									"value": "Magania",
+									"type": "text"
+								}
+							]
+						},
+						"url": "http://localhost:3000/digecur/v1/auth/register"
+					},
+					"response": []
+				},
+				{
+					"name": "login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\" : \"test05@gmail.com\",\n    \"password\" : \"Contrasenia1,23\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:3000/digecur/v1/auth/login"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "user",
+			"item": [
+				{
+					"name": "getAllUsers",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": "http://localhost:3000/digecur/v1/user"
+					},
+					"response": []
+				},
+				{
+					"name": "getUserById",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": "http://localhost:3000/digecur/v1/user/IsiRd0jdgYRulFsMUzjDnFYVFw13"
+					},
+					"response": []
+				},
+				{
+					"name": "updateUser",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "username",
+									"value": "usernameUpdated",
+									"type": "text"
+								},
+								{
+									"key": "bio",
+									"value": "update Bio",
+									"type": "text"
+								},
+								{
+									"key": "profilePicture",
+									"type": "file",
+									"src": "/C:/Users/Informatica/Pictures/images.jpg"
+								},
+								{
+									"key": "email",
+									"value": "test05@gmail.com",
+									"type": "text"
+								},
+								{
+									"key": "name",
+									"value": "NuevoNombre",
+									"type": "text"
+								},
+								{
+									"key": "surname",
+									"value": "NuevoApellido",
+									"type": "text"
+								},
+								{
+									"key": "dateOfBirth",
+									"value": "1990-12-25",
+									"type": "text"
+								}
+							]
+						},
+						"url": "http://localhost:3000/digecur/v1/user/IsiRd0jdgYRulFsMUzjDnFYVFw13"
+					},
+					"response": []
+				},
+				{
+					"name": "deactivateUser",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": "http://localhost:3000/digecur/v1/user/IsiRd0jdgYRulFsMUzjDnFYVFw13/deactivate"
+					},
+					"response": []
+				},
+				{
+					"name": "deleteUser",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": "http://localhost:3000/digecur/v1/user/IsiRd0jdgYRulFsMUzjDnFYVFw13"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "community",
+			"item": [
+				{
+					"name": "createCommunity",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Comunidad de Docentes\",\n    \"description\": \"Una comunidad para docentes de Guatemala\",\n    \"department\": \"Guatemala\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:3000/digecur/v1/community"
+					},
+					"response": []
+				},
+				{
+					"name": "getAllCommunities",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": "http://localhost:3000/digecur/v1/community"
+					},
+					"response": []
+				},
+				{
+					"name": "getCommunityById",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": "http://localhost:3000/digecur/v1/community/COMMUNITY_ID"
+					},
+					"response": []
+				},
+				{
+					"name": "updateCommunity",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Comunidad Actualizada\",\n    \"description\": \"Descripción actualizada\",\n    \"department\": \"Sacatepéquez\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:3000/digecur/v1/community/COMMUNITY_ID"
+					},
+					"response": []
+				},
+				{
+					"name": "deleteCommunity",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": "http://localhost:3000/digecur/v1/community/COMMUNITY_ID"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "thread",
+			"item": [
+				{
+					"name": "createThread",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"communityId\": \"COMMUNITY_ID\",\n    \"title\": \"Título del hilo\",\n    \"content\": \"Contenido del hilo\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:3000/digecur/v1/thread"
+					},
+					"response": []
+				},
+				{
+					"name": "getThreadsByCommunity",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": "http://localhost:3000/digecur/v1/thread/community/COMMUNITY_ID"
+					},
+					"response": []
+				},
+				{
+					"name": "getThreadById",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": "http://localhost:3000/digecur/v1/thread/THREAD_ID"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "comment",
+			"item": [
+				{
+					"name": "createComment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"threadId\": \"THREAD_ID\",\n    \"content\": \"Este es un comentario\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:3000/digecur/v1/comment"
+					},
+					"response": []
+				},
+				{
+					"name": "getCommentsByThread",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": "http://localhost:3000/digecur/v1/comment/thread/THREAD_ID"
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
