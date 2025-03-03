@@ -1,14 +1,16 @@
+// src/routes/auth.routes.js
+
 import { Router } from "express";
 import { register, login } from "./auth.controller.js";
 import { registerValidator, loginValidator } from "../middlewares/user-validators.js";
-import { uploadProfilePicture } from "../middlewares/multer-uploads.js"; // Se usa el middleware unificado
+import { uploadProfilePicture } from "../middlewares/multer-uploads.js";
 
 const router = Router();
 
 router.post(
   "/register",
-  uploadProfilePicture.single("profilePicture"), 
-  registerValidator, 
+  uploadProfilePicture, // Maneja el archivo en el campo "profilePicture"
+  registerValidator,
   register
 );
 

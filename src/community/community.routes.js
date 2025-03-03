@@ -1,30 +1,74 @@
+// src/routes/community.routes.js
+
 import { Router } from "express";
 import {
   createCommunity,
   getAllCommunities,
   getCommunityById,
+  joinCommunity,
+  leaveCommunity,
   updateCommunity,
   deleteCommunity
 } from "./community.controller.js";
-import { validateJWT } from "../middlewares/validate-jwt.js"; // Asegúrate de tenerlo
-import { hasRoles } from "../middlewares/validate-roles.js"; // Para permisos
-import { communityValidator } from "../middlewares/community-validators.js"; // Por ejemplo
+import { validateJWT } from "../middlewares/validate-jwt.js";
+import { hasRoles } from "../middlewares/validate-roles.js";
+import { communityValidator } from "../middlewares/community-validators.js";
+import { uploadCommunityPicture } from "../middlewares/multer-uploads.js";
 
 const router = Router();
 
-// Crear comunidad (solo usuarios autenticados)
-router.post("/", validateJWT, communityValidator, createCommunity);
+/**
+ * Crear comunidad con foto (campo "communityPicture").
+ * Solo usuarios autenticados.
+ */
+router.post(
+  "/",
+  validateJWT,
+  uploadCommunityPicture, // Maneja el archivo "communityPicture"
+  communityValidator,
+  createCommunity
+);
 
-// Listar comunidades
+/**
+ * Listar comunidades (requiere autenticación).
+ */
 router.get("/", validateJWT, getAllCommunities);
 
-// Obtener comunidad por ID
+/**
+ * Obtener comunidad por ID.
+ */
 router.get("/:communityId", validateJWT, getCommunityById);
 
-// Actualizar comunidad (por admin de la comunidad o ADMIN global)
-router.put("/:communityId", validateJWT, hasRoles("ADMIN", "USER"), communityValidator, updateCommunity);
+/**
+ * Unirse a una comunidad (POST /community/:communityId/join).
+ */
+router.post("/:communityId/join", validateJWT, joinCommunity);
 
-// Eliminar comunidad (por ADMIN)
-router.delete("/:communityId", validateJWT, hasRoles("ADMIN"), deleteCommunity);
+/**
+ * Salir de una comunidad (POST /community/:communityId/leave).
+ */
+router.post("/:communityId/leave", validateJWT, leaveCommunity);
+
+/**
+ * Actualizar comunidad (nombre, descripción, dept, etc.).
+ * Roles "ADMIN" o "USER".
+ */
+router.put(
+  "/:communityId",
+  validateJWT,
+  hasRoles("ADMIN", "USER"),
+  communityValidator,
+  updateCommunity
+);
+
+/**
+ * Eliminar comunidad (solo "ADMIN").
+ */
+router.delete(
+  "/:communityId",
+  validateJWT,
+  hasRoles("ADMIN"),
+  deleteCommunity
+);
 
 export default router;

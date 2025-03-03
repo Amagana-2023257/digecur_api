@@ -9,9 +9,11 @@ import userRoutes from "../src/user/user.routes.js";
 import communityRoutes from "../src/community/community.routes.js";
 import threadRoutes from "../src/thread/thread.routes.js";
 import commentRoutes from "../src/comment/comment.routes.js";
+import postRoutes from "../src/post/post.routes.js";
 import dotenv from "dotenv";
 import "../configs/firebase.js";
 dotenv.config();
+import { cloudinary } from './cloudinary.js'; // Importar la conexión a Cloudinary
 
 const { PORT } = process.env;
 
@@ -21,7 +23,6 @@ const middlewares = (app) => {
   app.use(cors());
   app.use(helmet());
   app.use(morgan("dev"));
-  app.use(apiLimiter);
 };
 
 const routes = (app) => {
@@ -30,6 +31,7 @@ const routes = (app) => {
   app.use("/digecur/v1/community", communityRoutes);
   app.use("/digecur/v1/thread", threadRoutes);
   app.use("/digecur/v1/comment", commentRoutes);
+  app.use("/digecur/v1/post", postRoutes);
   app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 };
 

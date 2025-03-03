@@ -1,4 +1,6 @@
-import { uploadToFirebaseStorage } from "../middlewares/multer-uploads.js";
+// src/controllers/user.controller.js
+
+import { uploadToCloudinary  } from "../middlewares/multer-uploads.js";
 import { admin } from "../../configs/firebase.js";
 import { handleErrorResponse } from "../helpers/handleResponse.js";
 
@@ -7,14 +9,27 @@ export const getAllUsers = async (req, res) => {
   try {
     const db = admin.firestore();
     const usersSnapshot = await db.collection("users").get();
-    const users = usersSnapshot.docs.map(doc => {
-      const { username, email, bio, profilePicture, followers, following, name, surname, dateOfBirth } = doc.data();
+    const users = usersSnapshot.docs.map((doc) => {
+      const {
+        username,
+        email,
+        bio,
+        profilePicture,
+        followers,
+        following,
+        name,
+        surname,
+        dateOfBirth,
+      } = doc.data();
+
+      const finalProfilePicture = profilePicture || 'https://placehold.co/40x40?text=User';
+
       return {
         id: doc.id,
         username,
         email,
         bio,
-        profilePicture,
+        profilePicture: finalProfilePicture,
         name,
         surname,
         dateOfBirth,
@@ -43,10 +58,13 @@ export const getUserById = async (req, res) => {
     if (!userDoc.exists) {
       return handleErrorResponse(res, 404, "Usuario no encontrado");
     }
+    const userData = userDoc.data();
+    userData.profilePicture = userData.profilePicture || 'https://placehold.co/40x40?text=User';
+    
     return res.status(200).json({
       success: true,
       message: "Usuario encontrado",
-      user: userDoc.data(),
+      user: userData,
     });
   } catch (error) {
     console.error("Error al obtener usuario:", error);
@@ -57,22 +75,13 @@ export const getUserById = async (req, res) => {
 // Actualizar usuario
 export const updateUser = async (req, res) => {
   const { userId } = req.params;
-  // Campos a actualizar: username, bio, dateOfBirth, name, surname, profilePicture
   const { username, bio, dateOfBirth, name, surname } = req.body;
-  let profilePicture;
 
   if (!username || !req.body.email) {
     return handleErrorResponse(res, 400, "El nombre de usuario y correo son obligatorios");
   }
 
   try {
-    // Si se subió una nueva foto de perfil, se procesa; de lo contrario se conserva la actual
-    if (req.file) {
-      profilePicture = await uploadToFirebaseStorage(req);
-    } else {
-      profilePicture = req.body.profilePicture;
-    }
-
     const db = admin.firestore();
     const userRef = db.collection("users").doc(userId);
     const userDoc = await userRef.get();
@@ -80,11 +89,20 @@ export const updateUser = async (req, res) => {
       return handleErrorResponse(res, 404, "Usuario no encontrado");
     }
 
-    // Construir objeto de actualización de forma condicional para evitar undefined
+    // Manejo de la nueva foto
+    let profilePicture;
+    if (req.file) {
+      // Subir a Cloudinary
+      profilePicture = await uploadToCloudinary(req, "profile-pictures");
+    } else {
+      // Mantener la imagen existente o usar placeholder
+      profilePicture = req.body.profilePicture || userDoc.data().profilePicture || 'https://placehold.co/40x40?text=User';
+    }
+
     let updatedUser = {
       username,
       bio: bio || "",
-      profilePicture: profilePicture || userDoc.data().profilePicture,
+      profilePicture,
       updatedAt: new Date().toISOString(),
     };
 

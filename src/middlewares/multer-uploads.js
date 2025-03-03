@@ -1,71 +1,74 @@
+// src/middlewares/multer-uploads.js
+
 import multer from 'multer';
+import { cloudinary } from '../../configs/cloudinary.js';
 import { Readable } from 'stream';
-import { admin } from '../../configs/firebase.js'; // Ajusta la ruta según tu estructura
 
-// ===================
-// Configuración de Multer
-// ===================
-const ALLOWED_MIMETYPES = ["image/png", "image/jpg", "image/jpeg"];
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+// Tipos de archivo permitidos y límite de tamaño (10MB)
+const MIMETYPES = ["image/png", "image/jpg", "image/jpeg"];
+const MAX_SIZE = 10000000;
 
-const storage = multer.memoryStorage();
-
-const fileFilter = (req, file, cb) => {
-  if (ALLOWED_MIMETYPES.includes(file.mimetype)) {
-    return cb(null, true);
-  }
-  const errorMsg = `Solo se aceptan archivos de tipo: ${ALLOWED_MIMETYPES.join(", ")}`;
-  return cb(new Error(errorMsg));
-};
-
-const multerConfig = {
-  storage,
-  fileFilter,
-  limits: {
-    fileSize: MAX_FILE_SIZE,
-  },
-};
-
-// Middleware para procesar la subida del archivo
-export const uploadProfilePicture = multer(multerConfig);
-
-// ===================
-// Función para subir archivo a Firebase Storage
-// ===================
-const bucket = admin.storage().bucket();
-
-export const uploadToFirebaseStorage = async (req) => {
-  if (!req.file) {
-    throw new Error('No se subió ningún archivo');
-  }
-
-  return new Promise((resolve, reject) => {
-    const fileName = `profile-pictures/${req.file.originalname.split('.')[0]}-${Date.now()}`;
-    const file = bucket.file(fileName);
-    const stream = bufferToStream(req.file.buffer);
-    const writeStream = file.createWriteStream({
-      metadata: {
-        contentType: req.file.mimetype,
-      },
-    });
-
-    stream.pipe(writeStream);
-
-    writeStream.on('finish', () => {
-      const publicUrl = `https://storage.googleapis.com/${bucket.name}/${file.name}`;
-      resolve(publicUrl);
-    });
-
-    writeStream.on('error', (error) => {
-      console.error('Error al subir la imagen a Firebase Storage:', error);
-      reject(new Error('Fallo al subir la imagen a Firebase Storage'));
-    });
+// Configuración de Multer para validar y almacenar el archivo en memoria
+const createMulterConfig = () => {
+  return multer({
+    storage: multer.memoryStorage(),
+    fileFilter: (req, file, cb) => {
+      if (MIMETYPES.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        console.log(`Tipo de archivo no permitido: ${file.mimetype}`);
+        cb(new Error(`Solo se aceptan archivos de tipo: ${MIMETYPES.join(", ")}`));
+      }
+    },
+    limits: {
+      fileSize: MAX_SIZE,
+    },
   });
 };
 
+// 1. Middleware para foto de perfil de usuario (campo "profilePicture")
+export const uploadProfilePicture = createMulterConfig().single("profilePicture");
+
+// 2. Middleware para foto de comunidad (campo "communityPicture")
+export const uploadCommunityPicture = createMulterConfig().single("communityPicture");
+
+// Función para convertir el buffer a un stream
 const bufferToStream = (buffer) => {
   const readable = new Readable();
   readable.push(buffer);
   readable.push(null);
   return readable;
+};
+
+/**
+ * Sube la imagen a Cloudinary de manera asíncrona.
+ * @param {Object} req - El objeto Request de Express.
+ * @param {String} folder - Carpeta de destino en Cloudinary (ej: 'profile-pictures', 'communities').
+ * @returns {Promise<String>} URL segura de la imagen en Cloudinary.
+ */
+export const uploadToCloudinary = async (req, folder = 'profile-pictures') => {
+  if (!req.file) {
+    throw new Error('No file uploaded');
+  }
+
+  return new Promise((resolve, reject) => {
+    const uploadResult = cloudinary.uploader.upload_stream(
+      {
+        public_id: `${folder}/${req.file.originalname.split('.')[0]}-${Date.now()}`,
+        folder,
+        resource_type: 'image',
+      },
+      (error, result) => {
+        if (error) {
+          console.error('Error uploading to Cloudinary:', error);
+          reject(new Error('Failed to upload image'));
+        } else {
+          resolve(result.secure_url);
+        }
+      }
+    );
+
+    // Convertir el archivo en un stream y enviarlo a Cloudinary
+    bufferToStream(req.file.buffer).pipe(uploadResult);
+  });
 };

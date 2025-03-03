@@ -1,3 +1,4 @@
+// src/helpers/generate-jwt.js
 import jwt from "jsonwebtoken";
 
 export const generateJWT = (uid = " ") => {
