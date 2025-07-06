@@ -9,28 +9,43 @@ import { uploadToCloudinary  } from "../middlewares/multer-uploads.js";
 
 // Registrar nuevo usuario
 export const register = async (req, res) => {
+  // 1) Validaciones de express-validator
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return handleErrorResponse(res, 400, "Validation error", errors.array());
+    // Devolvemos detalles puntuales de cada campo
+    return res.status(400).json({
+      success: false,
+      message: "Validation error",
+      errors: errors.array().map(err => ({
+        param: err.param,
+        msg: err.msg
+      }))
+    });
   }
 
   try {
     const data = req.body;
+
+    // 2) Verificar que haya subido archivo
     if (!req.file) {
-      return handleErrorResponse(res, 400, "La foto está vacía");
+      return res.status(400).json({
+        success: false,
+        message: "La foto está vacía",
+        errors: [{ param: "profilePicture", msg: "La foto está vacía" }]
+      });
     }
 
-    // Subimos la imagen a la carpeta "profile-pictures"
-    const profilePicture = await uploadToCloudinary (req, "profile-pictures");
+    // 3) Subir imagen a Cloudinary
+    const profilePicture = await uploadToCloudinary(req, "profile-pictures");
 
-    // Crear usuario en Firebase Auth
+    // 4) Crear usuario en Firebase Auth
     const userRecord = await admin.auth().createUser({
       email: data.email,
       password: data.password,
       displayName: data.username,
     });
 
-    // Guardar info adicional en Firestore
+    // 5) Guardar info adicional en Firestore
     const db = admin.firestore();
     await db.collection("users").doc(userRecord.uid).set({
       username: data.username,
@@ -46,6 +61,7 @@ export const register = async (req, res) => {
       joinedAt: new Date().toISOString(),
     });
 
+    // 6) Respuesta de éxito
     return res.status(201).json({
       success: true,
       message: "Usuario creado con éxito",
@@ -56,7 +72,7 @@ export const register = async (req, res) => {
         name: data.name,
         surname: data.surname,
         dateOfBirth: data.dateOfBirth,
-      },
+      }
     });
   } catch (err) {
     console.error("Error en el registro:", err);
