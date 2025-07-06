@@ -1,21 +1,33 @@
 import { admin } from "../../configs/firebase.js";
 import { handleErrorResponse } from "../helpers/handleResponse.js";
+import { uploadToCloudinary } from "../middlewares/multer-uploads.js";
 
-// Crear una publicación
+/**
+ * Crea una publicación — ahora con imagen opcional.
+ */
 export const createPost = async (req, res) => {
   try {
     const { title, content } = req.body;
-    // Se asume que el usuario autenticado está en req.usuario
     const authorId = req.usuario.uid;
+    let postImageUrl = null;
+
+    // Si subieron archivo, lo enviamos a Cloudinary
+    if (req.file) {
+      postImageUrl = await uploadToCloudinary(req, 'posts');
+    }
+
     const postData = {
       title,
       content,
       authorId,
+      postImageUrl,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
+
     const db = admin.firestore();
     const postRef = await db.collection("posts").add(postData);
+
     return res.status(201).json({
       success: true,
       message: "Publicación creada exitosamente",
@@ -27,11 +39,15 @@ export const createPost = async (req, res) => {
   }
 };
 
-// Listar todas las publicaciones
+/**
+ * Listar todas las publicaciones (sin cambios).
+ */
 export const getAllPosts = async (req, res) => {
   try {
     const db = admin.firestore();
-    const postsSnapshot = await db.collection("posts").orderBy("createdAt", "desc").get();
+    const postsSnapshot = await db.collection("posts")
+      .orderBy("createdAt", "desc")
+      .get();
     const posts = postsSnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
@@ -47,7 +63,9 @@ export const getAllPosts = async (req, res) => {
   }
 };
 
-// Obtener publicación por ID
+/**
+ * Obtener publicación por ID (sin cambios).
+ */
 export const getPostById = async (req, res) => {
   const { postId } = req.params;
   try {
@@ -67,7 +85,9 @@ export const getPostById = async (req, res) => {
   }
 };
 
-// Actualizar publicación
+/**
+ * Actualizar publicación — ahora con reemplazo de imagen opcional.
+ */
 export const updatePost = async (req, res) => {
   const { postId } = req.params;
   const { title, content } = req.body;
@@ -78,16 +98,24 @@ export const updatePost = async (req, res) => {
     if (!postDoc.exists) {
       return handleErrorResponse(res, 404, "Publicación no encontrada");
     }
-    const updatedPost = {
+
+    const updatedData = {
       title,
       content,
       updatedAt: new Date().toISOString(),
     };
-    await postRef.update(updatedPost);
+
+    // Si enviaron nueva imagen:
+    if (req.file) {
+      updatedData.postImageUrl = await uploadToCloudinary(req, 'posts');
+    }
+
+    await postRef.update(updatedData);
+
     return res.status(200).json({
       success: true,
       message: "Publicación actualizada exitosamente",
-      post: updatedPost,
+      post: updatedData,
     });
   } catch (error) {
     console.error("Error al actualizar la publicación:", error);
@@ -95,7 +123,9 @@ export const updatePost = async (req, res) => {
   }
 };
 
-// Eliminar publicación
+/**
+ * Eliminar publicación (sin cambios).
+ */
 export const deletePost = async (req, res) => {
   const { postId } = req.params;
   try {

@@ -28,6 +28,12 @@ export const uploadCommunityPicture = multer({
   fileFilter
 }).single('communityPicture');
 
+// Middleware para post
+export const uploadPostImage = multer({
+  storage,
+  fileFilter
+}).single('postImage');
+
 // --- 2) Helper para streaming a Cloudinary ---
 const bufferToStream = buffer => {
   const s = new Readable();
