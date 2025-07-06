@@ -9,19 +9,6 @@ import { uploadToCloudinary  } from "../middlewares/multer-uploads.js";
 
 // Registrar nuevo usuario
 export const register = async (req, res) => {
-  // 1) Validaciones de express-validator
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    // Devolvemos detalles puntuales de cada campo
-    return res.status(400).json({
-      success: false,
-      message: "Validation error",
-      errors: errors.array().map(err => ({
-        param: err.param,
-        msg: err.msg
-      }))
-    });
-  }
 
   try {
     const data = req.body;
