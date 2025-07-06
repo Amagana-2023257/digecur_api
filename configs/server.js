@@ -57,3 +57,4 @@ export const initServer = () => {
     console.log(`Error en la inicialización del servidor: ${err}`);
   }
 };
+

@@ -3,72 +3,89 @@
 import multer from 'multer';
 import { cloudinary } from '../../configs/cloudinary.js';
 import { Readable } from 'stream';
+import { fileTypeFromBuffer } from 'file-type';
+import sharp from 'sharp';
+import path from 'path';
 
-// Tipos de archivo permitidos y límite de tamaño (10MB)
-const MIMETYPES = ["image/png", "image/jpg", "image/jpeg"];
-const MAX_SIZE = 10000000;
+// --- 1) Configuración básica ---
+const ALLOWED_MIMES = ['image/png', 'image/jpg', 'image/jpeg'];
+const ALLOWED_EXTS  = ['.png', '.jpg', '.jpeg'];
+const MAX_SIZE      = 10 * 1024 * 1024; // 10 MB
 
-// Configuración de Multer para validar y almacenar el archivo en memoria
-const createMulterConfig = () => {
-  return multer({
-    storage: multer.memoryStorage(),
-    fileFilter: (req, file, cb) => {
-      if (MIMETYPES.includes(file.mimetype)) {
-        cb(null, true);
-      } else {
-        console.log(`Tipo de archivo no permitido: ${file.mimetype}`);
-        cb(new Error(`Solo se aceptan archivos de tipo: ${MIMETYPES.join(", ")}`));
-      }
-    },
-    limits: {
-      fileSize: MAX_SIZE,
-    },
-  });
+const storage = multer.memoryStorage();
+const fileFilter = (req, file, cb) => {
+  const ext = path.extname(file.originalname).toLowerCase();
+  if (!ALLOWED_MIMES.includes(file.mimetype) || !ALLOWED_EXTS.includes(ext)) {
+    return cb(new Error('Solo se aceptan imágenes PNG/JPG de hasta 10 MB'));
+  }
+  cb(null, true);
 };
 
-// 1. Middleware para foto de perfil de usuario (campo "profilePicture")
-export const uploadProfilePicture = createMulterConfig().single("profilePicture");
+// Middleware para perfil
+export const uploadProfilePicture = multer({
+  storage,
+  fileFilter,
+  limits: { fileSize: MAX_SIZE }
+}).single('profilePicture');
 
-// 2. Middleware para foto de comunidad (campo "communityPicture")
-export const uploadCommunityPicture = createMulterConfig().single("communityPicture");
+// Middleware para comunidad
+export const uploadCommunityPicture = multer({
+  storage,
+  fileFilter,
+  limits: { fileSize: MAX_SIZE }
+}).single('communityPicture');
 
-// Función para convertir el buffer a un stream
-const bufferToStream = (buffer) => {
-  const readable = new Readable();
-  readable.push(buffer);
-  readable.push(null);
-  return readable;
+// --- 2) Helper para streaming a Cloudinary ---
+const bufferToStream = buffer => {
+  const s = new Readable();
+  s.push(buffer);
+  s.push(null);
+  return s;
 };
 
-/**
- * Sube la imagen a Cloudinary de manera asíncrona.
- * @param {Object} req - El objeto Request de Express.
- * @param {String} folder - Carpeta de destino en Cloudinary (ej: 'profile-pictures', 'communities').
- * @returns {Promise<String>} URL segura de la imagen en Cloudinary.
- */
+// --- 3) Upload simplificado y seguro ---
 export const uploadToCloudinary = async (req, folder = 'profile-pictures') => {
-  if (!req.file) {
-    throw new Error('No file uploaded');
+  const file = req.file;
+  if (!file?.buffer) {
+    throw new Error('No se subió ningún archivo');
+  }
+  const buffer = file.buffer;
+  const originalName = file.originalname;
+
+  // 3.1 Verificar magic bytes
+  const type = await fileTypeFromBuffer(buffer);
+  if (!type || !ALLOWED_MIMES.includes(type.mime)) {
+    throw new Error('El archivo no es una imagen válida');
   }
 
+  // 3.2 Verificar metadata con sharp
+  try {
+    await sharp(buffer).metadata();
+  } catch {
+    throw new Error('No se pudo procesar como imagen');
+  }
+
+  // 3.3 Redimensionar/comprimir
+  const meta  = await sharp(buffer).metadata();
+  const width = Math.min(1500, meta.width);
+  const processed = (type.mime === 'image/jpeg'
+    ? await sharp(buffer).resize(width).jpeg({ quality: 75 }).toBuffer()
+    : await sharp(buffer).resize(width).png().toBuffer()
+  );
+
+  // 3.4 Subir a Cloudinary y resolver con callback
   return new Promise((resolve, reject) => {
-    const uploadResult = cloudinary.uploader.upload_stream(
-      {
-        public_id: `${folder}/${req.file.originalname.split('.')[0]}-${Date.now()}`,
-        folder,
-        resource_type: 'image',
-      },
-      (error, result) => {
-        if (error) {
-          console.error('Error uploading to Cloudinary:', error);
-          reject(new Error('Failed to upload image'));
-        } else {
-          resolve(result.secure_url);
+    const publicId = `${folder}/${path.parse(originalName).name}-${Date.now()}`;
+    const uploadStream = cloudinary.uploader.upload_stream(
+      { folder, public_id: publicId, resource_type: 'image' },
+      (err, result) => {
+        if (err) {
+          console.error('Error al subir a Cloudinary:', err);
+          return reject(new Error('Error al subir imagen'));
         }
+        resolve(result.secure_url);
       }
     );
-
-    // Convertir el archivo en un stream y enviarlo a Cloudinary
-    bufferToStream(req.file.buffer).pipe(uploadResult);
+    bufferToStream(processed).pipe(uploadStream);
   });
 };

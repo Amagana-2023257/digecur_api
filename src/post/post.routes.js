@@ -19,3 +19,4 @@ router.put("/:postId", validateJWT,hasRoles("ADMIN"), postValidator, updatePost)
 router.delete("/:postId", validateJWT,hasRoles("ADMIN"), deletePost);
 
 export default router;
+

@@ -8,7 +8,7 @@ import {
 } from "./user.controller.js";
 import { validateJWT } from "../middlewares/validate-jwt.js";
 import { hasRoles } from "../middlewares/validate-roles.js";
-import { uploadProfilePicture } from "../middlewares/multer-uploads.js"; // <-- Nuevo middleware
+import { uploadProfilePicture } from "../middlewares/multer-uploads.js";
 import { updateUserValidator, deleteUserValidator } from "../middlewares/user-validators.js";
 
 const router = Router();
@@ -19,16 +19,15 @@ router.get("/", validateJWT, hasRoles("ADMIN"), getAllUsers);
 // Obtener un usuario por su ID (ADMIN o USER)
 router.get("/:userId", validateJWT, hasRoles("ADMIN", "USER"), getUserById);
 
-// Actualizar un usuario
+// Actualizar un usuario (ADMIN o propio USER)
 router.put(
-    "/:userId",
-    validateJWT,
-    hasRoles("ADMIN", "USER"),
-    uploadProfilePicture,   // <-- Usas el middleware tal cual, sin .single()
-    updateUserValidator,
-    updateUser
-  );
-  
+  "/:userId",
+  validateJWT,
+  hasRoles("ADMIN", "USER"),
+  uploadProfilePicture,
+  updateUserValidator,
+  updateUser
+);
 
 // Desactivar un usuario (borrado lógico, solo ADMIN)
 router.put("/:userId/deactivate", validateJWT, hasRoles("ADMIN"), deactivateUser);
@@ -37,3 +36,4 @@ router.put("/:userId/deactivate", validateJWT, hasRoles("ADMIN"), deactivateUser
 router.delete("/:userId", validateJWT, hasRoles("ADMIN"), deleteUserValidator, deleteUser);
 
 export default router;
+

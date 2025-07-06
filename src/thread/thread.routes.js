@@ -15,3 +15,4 @@ router.get("/community/:communityId", validateJWT, getThreadsByCommunity);
 router.get("/:threadId", validateJWT, getThreadById);
 
 export default router;
+

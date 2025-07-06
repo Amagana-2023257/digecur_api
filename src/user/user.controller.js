@@ -92,13 +92,13 @@ export const updateUser = async (req, res) => {
     // Manejo de la nueva foto
     let profilePicture;
     if (req.file) {
-      // Subir a Cloudinary
       profilePicture = await uploadToCloudinary(req, "profile-pictures");
     } else {
-      // Mantener la imagen existente o usar placeholder
-      profilePicture = req.body.profilePicture || userDoc.data().profilePicture || 'https://placehold.co/40x40?text=User';
+      // No incluimos profilePicture en updatedUser si no se sube nueva
+      profilePicture = undefined;
     }
 
+    // Construir objeto a actualizar
     let updatedUser = {
       username,
       bio: bio || "",
@@ -110,12 +110,18 @@ export const updateUser = async (req, res) => {
     if (name !== undefined) updatedUser.name = name;
     if (surname !== undefined) updatedUser.surname = surname;
 
-    await userRef.update(updatedUser);
+    // Eliminar campos undefined
+    const cleanData = {};
+    Object.entries(updatedUser).forEach(([key, value]) => {
+      if (value !== undefined) cleanData[key] = value;
+    });
+
+    await userRef.update(cleanData);
 
     return res.status(200).json({
       success: true,
       message: "Usuario actualizado exitosamente",
-      user: updatedUser,
+      user: cleanData,
     });
   } catch (error) {
     console.error("Error al actualizar el usuario:", error);

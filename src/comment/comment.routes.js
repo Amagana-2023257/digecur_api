@@ -10,6 +10,7 @@ import {
 import { validateJWT } from "../middlewares/validate-jwt.js";
 // import { hasRoles } from "../middlewares/validate-roles.js"; // si deseas roles
 
+
 const router = Router();
 
 /**

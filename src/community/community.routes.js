@@ -15,6 +15,7 @@ import { hasRoles } from "../middlewares/validate-roles.js";
 import { communityValidator } from "../middlewares/community-validators.js";
 import { uploadCommunityPicture } from "../middlewares/multer-uploads.js";
 
+
 const router = Router();
 
 /**
