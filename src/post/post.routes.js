@@ -12,11 +12,11 @@ import { hasRoles } from "../middlewares/validate-roles.js";
 
 const router = Router();
 
-router.post("/", validateJWT,hasRoles("ADMIN"), postValidator, createPost);
+router.post("/", validateJWT,hasRoles("ADMIN", "USER"), postValidator, createPost);
 router.get("/", getAllPosts);
 router.get("/:postId", validateJWT, getPostById);
-router.put("/:postId", validateJWT,hasRoles("ADMIN"), postValidator, updatePost);
-router.delete("/:postId", validateJWT,hasRoles("ADMIN"), deletePost);
+router.put("/:postId", validateJWT,hasRoles("ADMIN", "USER"), postValidator, updatePost);
+router.delete("/:postId", validateJWT,hasRoles("ADMIN", "USER"), deletePost);
 
 export default router;
 
